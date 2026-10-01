@@ -1,0 +1,17 @@
+const assert=require('node:assert/strict');const {DEFAULT,analyze,BARS,suggest,displaced}=require('./engine');
+let count=0;function test(name,fn){fn();count++;console.log('PASS '+name)}const near=(a,b,t=1e-7)=>assert(Math.abs(a-b)<=t,`${a} != ${b}`);
+test('單筋梁獨立手算',()=>{let p={...DEFAULT,rows:[{face:'bottom',n:4,bar:8,offset:0}]},r=analyze(p),As=4*5.067,d=65-4-.953-1.27,a=As*4200/(.85*280*35);near(r.Mn,As*4200*(d-a/2)/1e5);near(r.c,a/.85);near(r.cap,.9*r.Mn)});
+test('雙筋梁以獨立拉壓力矩求值',()=>{let r=analyze(DEFAULT),Fs=r.steels;near(Fs.reduce((s,x)=>s+x.F,0)+r.Cc,0,1e-6);near(r.Mn,(r.Cc*(r.d-r.a/2)+Fs.filter(x=>x.eps>0).reduce((s,x)=>s+x.F*(r.d-x.z),0))/1e5,1e-7)});
+test('正負彎矩鏡射',()=>{let p={...DEFAULT,mode:'direct'},a=analyze(p),b=analyze({...p,dir:'negative',rows:p.rows.map(x=>({...x,face:x.face==='top'?'bottom':'top'}))});near(a.Mn,b.Mn)});
+test('圓形相交面積與一次矩',()=>{const r={db:2,A:Math.PI,z:10};near(displaced(r,8).Ac,0);near(displaced(r,12).Ac,Math.PI);near(displaced(r,10).Ac,Math.PI/2);near(displaced(r,10).Qc,10*Math.PI/2-2/3);near(displaced(r,12).Qc,10*Math.PI)});
+test('壓力塊切過筋排：掃描持續收斂',()=>{for(let n=2;n<=12;n++){let p={...DEFAULT,b:65,rows:[{face:'bottom',n,bar:8,offset:0},{face:'top',n:4,bar:8,offset:0}]};let r=analyze(p);assert(Math.abs(r.residual)<.001)}});
+test('尺寸效應與最小箍筋分支',()=>{let p={...DEFAULT,s:90},r=analyze(p);assert(r.Av<r.Avmin);near(r.Vc,Math.min(1.33,2.12*r.lambdaS*Math.cbrt(r.rho))*Math.sqrt(p.fc)*p.b*r.d/1000);assert(!r.ok)});
+test('梁自重與重力組合',()=>{let r=analyze({...DEFAULT,D:0,LL:0});near(r.self,.546);near(r.wu,1.4*.546);near(r.Mu,r.wu*36/8);near(r.Vu,r.wu*3)});
+test('未開裂簡支撓度獨立公式',()=>{let p={...DEFAULT,L:3,Ln:2.8,D:0,LL:0},r=analyze(p);assert(r.self*9/8<2*r.Mcr/3);near(r.deltaD,5*(r.self*10)*300**4/(384*(12000*Math.sqrt(280))*(35*65**3/12)))});
+test('撓度新版 Ie 與持續載重',()=>{let r=analyze(DEFAULT),M=r.Dtot*36/8+.8*36/8;near(r.Ie,r.Icr/(1-(2*r.Mcr/3/M)**2*(1-r.Icr/r.Ig)));near(r.deltaAfter,r.deltaLL+r.lambdaD*r.deltaS)});
+test('直接模式忽略非使用欄位',()=>{let r=analyze({...DEFAULT,mode:'direct',D:NaN,L:NaN,LL:NaN});assert(Number.isFinite(r.cap));assert(!r.checks.some(x=>x.name.includes('撓度')))});
+test('一般載重模式忽略隱藏內力',()=>assert(Number.isFinite(analyze({...DEFAULT,Mu:NaN,Vu:NaN}).cap)));
+test('無效幾何與材料停止計算',()=>{for(const patch of [{b:NaN},{Ln:7},{rows:[]},{rows:[{face:'bottom',n:4,bar:8,offset:40}]},{Es:0}])assert.throws(()=>analyze({...DEFAULT,...patch}))});
+test('淨跨深梁限制與側面筋待核',()=>{assert(!analyze({...DEFAULT,Ln:2.6}).ok);assert(analyze({...DEFAULT,h:95,L:9,Ln:8.6}).scopeIssues.length)});
+test('配筋建議回算',()=>{let x=suggest(DEFAULT,8);assert(x);assert(analyze({...DEFAULT,rows:x.rows}).checks.filter(c=>['彎矩強度','拉力控制','最小受拉鋼筋'].includes(c.name)).every(c=>c.ok));assert(!suggest({...DEFAULT,Ln:2},8))});
+console.log(`${count} verification groups passed`);

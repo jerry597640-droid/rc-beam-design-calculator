@@ -64,7 +64,7 @@ $('design').onclick=()=>{if(!latest){toast('請先修正輸入資料');return}co
 $('reset').onclick=()=>{if(!confirm('載入範例會取代目前所有參數，確定載入？'))return;p=structuredClone(DEFAULT);activeStep=0;dimRow=-1;init();toast('已載入 35 × 65 cm 範例')};
 function toast(t){$('toast').textContent=t;$('toast').classList.remove('hidden');setTimeout(()=>$('toast').classList.add('hidden'),2800)}
 $('print').onclick=()=>{if(!latest){toast('請先修正資料再列印');return}document.querySelectorAll('#process details').forEach(x=>x.open=true);window.print()};
-$('download').onclick=()=>{if(!latest){toast('請先修正輸入再下載');return}const clone=document.documentElement.cloneNode(true);clone.querySelector('#initialState').textContent=JSON.stringify(p).replace(/</g,'\\u003c');clone.querySelector('#toast').classList.add('hidden');const html='<!doctype html>\n'+clone.outerHTML;let url=URL.createObjectURL(new Blob([html],{type:'text/html;charset=utf-8'})),a=document.createElement('a');a.href=url;a.download='RC_Beam_Analysis_TW112_v1_4.html';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('已下載，離線開啟會保留目前參數')};
+$('download').onclick=()=>{if(!latest){toast('請先修正輸入再下載');return}const clone=document.documentElement.cloneNode(true);clone.querySelector('#initialState').textContent=JSON.stringify(p).replace(/</g,'\\u003c');clone.querySelector('#toast').classList.add('hidden');const html='<!doctype html>\n'+clone.outerHTML;let url=URL.createObjectURL(new Blob([html],{type:'text/html;charset=utf-8'})),a=document.createElement('a');a.href=url;a.download='RC_Beam_Analysis_TW112_v1_5.html';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('已下載，離線開啟會保留目前參數')};
 document.querySelectorAll('[data-step]').forEach(b=>b.onclick=()=>setStep(+b.dataset.step));
 document.querySelector('.input-tabs').onkeydown=e=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(e.key)){e.preventDefault();const i=e.key==='Home'?0:e.key==='End'?3:(activeStep+(e.key==='ArrowRight'?1:3))%4;setStep(i);document.querySelector('[data-step="'+i+'"]').focus()}};
 $('expandCalcs').onclick=()=>document.querySelectorAll('#process details').forEach(d=>d.open=true);
@@ -72,7 +72,7 @@ $('collapseCalcs').onclick=()=>document.querySelectorAll('#process details').for
 
 function setView(view){
  document.body.dataset.view=view;
- $('workspace').classList.toggle('view-hidden',view==='process'||view==='basis');
+ $('workspace').classList.toggle('view-hidden',view==='process'||view==='basis'||view==='help');
  document.querySelectorAll('[data-view]').forEach(el=>{if(el===document.body)return;const on=el.dataset.view===view||(view==='results'&&el.closest('.app-nav')&&el.dataset.view==='workspace');el.classList.toggle('active',on);el.setAttribute('aria-pressed',String(on));});
 }
 document.querySelectorAll('button[data-view]').forEach(b=>b.onclick=()=>setView(b.dataset.view));
@@ -80,3 +80,6 @@ document.querySelectorAll('[data-command]').forEach(b=>b.onclick=()=>{b.closest(
 $('focusToggle').onclick=()=>{const on=document.body.classList.toggle('focus-mode');$('focusToggle').textContent=on?'顯示參數面板':'收合參數面板';$('focusToggle').setAttribute('aria-pressed',String(on))};
 init();setView('workspace');
 
+
+$('printHelp').onclick=()=>{document.body.classList.add('print-help');document.querySelectorAll('#help details').forEach(d=>d.open=true);window.print()};
+window.addEventListener('afterprint',()=>document.body.classList.remove('print-help'));

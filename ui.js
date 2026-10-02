@@ -64,7 +64,7 @@ $('design').onclick=()=>{if(!latest){toast('請先修正輸入資料');return}co
 $('reset').onclick=()=>{if(!confirm('載入範例會取代目前所有參數，確定載入？'))return;p=structuredClone(DEFAULT);activeStep=0;dimRow=-1;init();toast('已載入 35 × 65 cm 範例')};
 function toast(t){$('toast').textContent=t;$('toast').classList.remove('hidden');setTimeout(()=>$('toast').classList.add('hidden'),2800)}
 $('print').onclick=()=>{if(!latest){toast('請先修正資料再列印');return}document.querySelectorAll('#process details').forEach(x=>x.open=true);window.print()};
-$('download').onclick=()=>{if(!latest){toast('請先修正輸入再下載');return}const clone=document.documentElement.cloneNode(true);clone.querySelector('#initialState').textContent=JSON.stringify(p).replace(/</g,'\\u003c');clone.querySelector('#toast').classList.add('hidden');const html='<!doctype html>\n'+clone.outerHTML;let url=URL.createObjectURL(new Blob([html],{type:'text/html;charset=utf-8'})),a=document.createElement('a');a.href=url;a.download='RC_Beam_Analysis_TW112_v1_5.html';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('已下載，離線開啟會保留目前參數')};
+$('download').onclick=()=>{if(!latest){toast('請先修正輸入再下載');return}const clone=document.documentElement.cloneNode(true);clone.querySelector('#initialState').textContent=JSON.stringify(p).replace(/</g,'\\u003c');clone.querySelector('#toast').classList.add('hidden');const html='<!doctype html>\n'+clone.outerHTML;let url=URL.createObjectURL(new Blob([html],{type:'text/html;charset=utf-8'})),a=document.createElement('a');a.href=url;a.download='RC_Beam_Analysis_TW112_v1_6.html';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('已下載，離線開啟會保留目前參數')};
 document.querySelectorAll('[data-step]').forEach(b=>b.onclick=()=>setStep(+b.dataset.step));
 document.querySelector('.input-tabs').onkeydown=e=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(e.key)){e.preventDefault();const i=e.key==='Home'?0:e.key==='End'?3:(activeStep+(e.key==='ArrowRight'?1:3))%4;setStep(i);document.querySelector('[data-step="'+i+'"]').focus()}};
 $('expandCalcs').onclick=()=>document.querySelectorAll('#process details').forEach(d=>d.open=true);
@@ -83,3 +83,16 @@ init();setView('workspace');
 
 $('printHelp').onclick=()=>{document.body.classList.add('print-help');document.querySelectorAll('#help details').forEach(d=>d.open=true);window.print()};
 window.addEventListener('afterprint',()=>document.body.classList.remove('print-help'));
+
+
+// Load complete worked examples; keep the default calculation model unchanged.
+document.querySelectorAll('[data-example]').forEach(button=>button.onclick=()=>{
+ if(!confirm('載入此範例會取代目前所有參數，確定載入？'))return;
+ p=structuredClone(DEFAULT);
+ const negative=button.dataset.example==='negative';
+ if(negative){p.mode='direct';p.dir='negative';p.rows=p.rows.map(row=>({...row,face:row.face==='top'?'bottom':'top'}));}
+ activeStep=0;dimRow=-1;onlyFailures=false;
+ document.body.classList.remove('focus-mode');$('focusToggle').textContent='收合參數面板';$('focusToggle').setAttribute('aria-pressed','false');
+ init();goStep(0);$('b').focus({preventScroll:true});
+ toast(negative?'已載入 B：直接負彎矩範例':'已載入 A：簡支均布範例');
+});

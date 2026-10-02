@@ -42,7 +42,7 @@ function analyze(p){
  check('箍筋橫向肢距',legSpace<=widthMax+1e-8,{demand:legSpace,capacity:widthMax,unit:'cm'},'表 9.7.6.2.2（假設等距有效肢）');
  check('主筋水平淨距',rows.every(r=>r.space+1e-8>=r.minSpace),{text:rows.map(r=>'第'+(r.i+1)+'排 '+(isFinite(r.space)?r.space.toFixed(2):'單根')+'／需求 '+r.minSpace.toFixed(2)+' cm').join('；')},'25.2.1');
  check('主筋垂直淨距',gapMin>=Math.max(2.5,4*p.agg/3)-1e-8,{text:(isFinite(gapMin)?gapMin.toFixed(2):'單排')+' cm；本工具採 ≥ max(2.5,4dagg/3)'},'25.2.2／26.4.2.1（另須上下對齊）');
- check('室內梁保護層',p.cover>=4,{demand:4,capacity:p.cover,unit:'cm'},'20.6.1.3.1（非暴露環境）');
+ check('室內梁保護層',p.cover>=4,{demand:4,capacity:p.cover,unit:'cm'},'20.5.1.3.1（非暴露環境）');
  const Ec=12000*Math.sqrt(p.fc),n=p.Es/Ec,Ig=p.b*p.h**3/12,Mcr=2*Math.sqrt(p.fc)*Ig/(p.h/2)/1e5;
  const kd=bisect(k=>p.b*k*k/2+rows.reduce((s,r)=>s+(r.z<k?n-1:n)*r.A*(k-r.z),0),.000001,p.h),Icr=p.b*kd**3/3+rows.reduce((s,r)=>s+(r.z<kd?n-1:n)*r.A*(r.z-kd)**2,0);
  const ie=M=>M<=2/3*Mcr?Ig:Math.min(Ig,Icr/(1-(2*Mcr/(3*M))**2*(1-Icr/Ig)));
